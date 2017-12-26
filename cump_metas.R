@@ -30,29 +30,35 @@ pract.cump.m <- sum(datos.m$cumple_seg, na.rm = TRUE) / n.productores
 pract.cump.lb <- sum(datos$cumple_lb, na.rm = TRUE) 
 pract.cump.lb.prod <- pract.cump.lb / n.productores
 
-# Cumplimiento de prácticas que ya cumplían en LB, por productor
+# Cumplimiento de prácticas cumplidas en LB, por productor
 datos.c <- datos[datos$cumple_lb == 1, ]
 pract.cump.lb.seg <- sum(datos.c$cumple_seg, na.rm = TRUE) / n.productores
 
 
+# Prácticas que no cumplían y no meta -----------------------------------------------
+
+# Número de productores
+pract.nocump.nometa <- nrow(datos[datos$cumple_lb == 0 & datos$meta == 0, ])
+pract.nocump.nometa.prod <- pract.nocump.nometa / n.productores
+
+# Prácticas cumplidas en seguimiento por productor
+datos.nc.nm <- datos[datos$cumple_lb == 0 & datos$meta == 0, ]
+pract.nocump.nometa.seg <- sum(datos.nc.nm$cumple_seg, na.rm = TRUE)
+pract.nocump.nometa.seg.prod <- pract.nocump.nometa.seg / n.productores
 
 
+# Cumplimiento de prácticas con respecto a metas ------------------------------------
 
+# Agrupar por práctica
+library(dplyr)
+practicas <- aggregate(x = select(datos.m, cumple_lb, meta, cumple_seg),
+                       by = select(datos.m, practica), FUN = sum, na.rm = TRUE)
 
+# Calcular cumplimiento como porcentaje de meta
+practicas <- data.frame(practicas, 
+                        cump.por.meta = practicas$cumple_seg / practicas$meta)
 
-# Nivel de cumplimiento en prácticas seleccionadas como meta
-cump.por.practica <- aggregate(datos.m, by = select(datos, ))
-
-
-
-
-
-
-# Mantener solo prácticas con meta
-datos.meta <- datos[datos$Meta == 1, ]
-
-# Promedio de prácticas con meta cumplidas
-n.productores <- nrow(datos) / 50
-prom.cump <- colSums(datos$Cumple)
-
-# Promedio de practicas con meta
+# Ordenar y exportar a excel
+practicas <- practicas[order(practicas$cump.por.meta, decreasing = TRUE), ]
+library(xlsx)
+write.xlsx(practicas, "../practicas.xlsx")
